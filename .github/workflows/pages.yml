@@ -14,14 +14,128 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Copy the demo files
+      - name: Prepare the interactive rack
         run: |
           mkdir public
-          base=https://denim-rack-motion-preview.spunkyjewel4.chatgpt.site
-          curl -fsSL "$base/" -o public/index.html
-          curl -fsSL "$base/rack.jpg" -o public/rack.jpg
-          curl -fsSL "$base/rack.mp4" -o public/rack.mp4
-          grep -q 'rack.mp4' public/index.html
+          curl -fsSL https://denim-rack-motion-preview.spunkyjewel4.chatgpt.site/rack.jpg -o public/rack.jpg
+          cat > public/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta name="robots" content="noindex, nofollow">
+          <title>Denim rack motion</title>
+          <style>
+            * { box-sizing: border-box; }
+            body { margin: 0; background: white; }
+            main { min-height: 100svh; display: grid; place-items: center; padding: 10px; }
+            .rack { position: relative; width: min(100%, 1200px, 185svh); aspect-ratio: 2; container-type: inline-size; isolation: isolate; }
+            .pipe, .fitting {
+              position: absolute;
+              background:
+                repeating-linear-gradient(94deg, #17171955 0 1px, transparent 2px 5px, #f3f3e630 6px 7px, transparent 8px 13px),
+                linear-gradient(#252728, #6d6d69 12%, #acada4 24%, #666864 39%, #494a48 64%, #252626 89%, #111212);
+              box-shadow: inset 0 0 0 1px #2226, 0 .18cqw .34cqw #24252030;
+            }
+            .pipe { top: 17%; left: 3.8%; right: 3.8%; height: 1.45cqw; border-radius: .5cqw; z-index: 4; pointer-events: none; }
+            .fitting { top: -.62cqw; width: 3.5cqw; height: 2.69cqw; border-radius: .4cqw; }
+            .fitting:first-child { left: -.65cqw; }
+            .fitting:last-child { right: -.65cqw; }
+            .fitting::after {
+              content: ''; position: absolute; inset: .16cqw .65cqw;
+              background: repeating-linear-gradient(90deg, #10121190 0 1px, #c6c5b650 1px 2px, transparent 2px 4px);
+              border-inline: .22cqw solid #30312e; border-radius: .2cqw;
+            }
+            .piece {
+              position: absolute; left: var(--x); top: 19.8%; width: var(--w); height: 66%; z-index: 1;
+              border: 0; background: transparent; padding: 0; cursor: pointer; touch-action: manipulation;
+              transform-origin: 50% 0; transition: transform .34s cubic-bezier(.2,.8,.22,1);
+              -webkit-tap-highlight-color: transparent;
+            }
+            .piece:focus-visible { outline: 2px solid #536781; outline-offset: 2px; border-radius: .4cqw; }
+            .piece.active { z-index: 3; transform: translateY(.65cqw) scale(1.09); }
+            .hanger { position: absolute; inset: 0; transform-origin: 50% 0; pointer-events: none; }
+            .hanger::before {
+              content: ''; position: absolute; left: calc(50% - .54cqw); top: -2.35cqw;
+              width: 1.1cqw; height: 2.8cqw; border: .28cqw solid #555651; border-left-color: transparent;
+              border-radius: 70% 65% 38% 28%; box-shadow: .12cqw 0 .1cqw #2526224a;
+            }
+            .denim {
+              position: absolute; inset: 0;
+              background: url(rack.jpg) no-repeat var(--crop) -10.75cqw / 100cqw 50cqw;
+              mix-blend-mode: multiply;
+              filter: contrast(1.12) saturate(1.12);
+              transition: filter .3s;
+            }
+            .piece.active .denim { filter: contrast(1.25) saturate(1.24); }
+            .piece { mix-blend-mode: multiply; }
+            @media (prefers-reduced-motion: reduce) { .piece, .denim { transition: none; } }
+          </style>
+          <main>
+            <div class="rack" role="group" aria-label="Denim rack">
+              <div class="pipe" aria-hidden="true"><i class="fitting"></i><i class="fitting"></i></div>
+              <button class="piece" type="button" aria-label="Light blue jeans" aria-pressed="false" style="--x:6.8%;--w:19%;--crop:-6.833cqw"><span class="hanger" aria-hidden="true"><span class="denim"></span></span></button>
+              <button class="piece" type="button" aria-label="Faded blue jeans" aria-pressed="false" style="--x:27.8%;--w:18.5%;--crop:-27.833cqw"><span class="hanger" aria-hidden="true"><span class="denim"></span></span></button>
+              <button class="piece" type="button" aria-label="Flame-detail jeans" aria-pressed="false" style="--x:54.2%;--w:15.2%;--crop:-54.167cqw"><span class="hanger" aria-hidden="true"><span class="denim"></span></span></button>
+              <button class="piece" type="button" aria-label="Black jeans" aria-pressed="false" style="--x:75.4%;--w:17.6%;--crop:-75.417cqw"><span class="hanger" aria-hidden="true"><span class="denim"></span></span></button>
+            </div>
+          </main>
+          <script>
+            const rack = document.querySelector('.rack');
+            const pieces = [...rack.querySelectorAll('button')];
+            const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+            let selected, hovered, focused, active, swing;
+          
+            function updateRack() {
+              const next = hovered || focused || selected;
+              if (next === active) return;
+              swing?.cancel();
+              active?.classList.remove('active');
+              active = next;
+              if (!active) return;
+              active.classList.add('active');
+              if (!reducedMotion.matches) {
+                swing = active.querySelector('.hanger').animate(
+                  [0, -4.8, 2.5, -1.25, .48, 0].map(angle => ({ transform: 'rotate(' + angle + 'deg)' })),
+                  { duration: 870, easing: 'cubic-bezier(.17,.7,.3,1)' }
+                );
+              }
+            }
+          
+            function select(piece) {
+              selected = selected === piece ? null : piece;
+              pieces.forEach(button => button.setAttribute('aria-pressed', String(button === selected)));
+              updateRack();
+            }
+          
+            for (const piece of pieces) {
+              piece.addEventListener('pointerenter', event => {
+                if (event.pointerType === 'mouse' || event.pointerType === 'pen') {
+                  hovered = piece;
+                  updateRack();
+                }
+              });
+              piece.addEventListener('pointerleave', () => {
+                if (hovered === piece) hovered = null;
+                updateRack();
+              });
+              piece.addEventListener('focus', () => {
+                if (piece.matches(':focus-visible')) { focused = piece; updateRack(); }
+              });
+              piece.addEventListener('blur', () => { focused = null; updateRack(); });
+              piece.addEventListener('click', () => select(piece));
+            }
+            document.addEventListener('click', event => {
+              if (selected && !event.target.closest('.piece')) select(null);
+            });
+            document.addEventListener('keydown', event => {
+              if (event.key !== 'Escape') return;
+              focused = hovered = null;
+              select(null);
+            });
+          </script>
+          </html>
+          HTML
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public

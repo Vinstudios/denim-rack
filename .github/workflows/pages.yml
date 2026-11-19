@@ -47,11 +47,12 @@ jobs:
             .piece {
               position: absolute; left: var(--x); top: 19.8%; width: var(--w); height: 66%; z-index: 1;
               border: 0; background: transparent; padding: 0; cursor: pointer; touch-action: manipulation;
-              transform-origin: 50% 0; transition: transform .34s cubic-bezier(.2,.8,.22,1);
+              transform-origin: 50% 0; transition: opacity .22s ease;
               -webkit-tap-highlight-color: transparent;
             }
             .piece:focus-visible { outline: 2px solid #536781; outline-offset: 2px; border-radius: .4cqw; }
-            .piece.active { z-index: 3; }
+            .piece.active { z-index: 3; opacity: 1; mix-blend-mode: normal; }
+            .rack:has(.piece.active) .piece:not(.active) { opacity: .62; }
             .piece.active .hanger { translate: 0 .65cqw; scale: 1.09; }
             .hanger { position: absolute; inset: 0; transform-origin: 50% 0; pointer-events: none; transition: translate .34s ease, scale .34s ease; }
             .hanger::before {
@@ -66,7 +67,8 @@ jobs:
               filter: contrast(1.12) saturate(1.12);
               transition: filter .3s;
             }
-            .piece.active .denim { filter: contrast(1.25) saturate(1.24); }
+            .piece.active .denim { mix-blend-mode: normal; filter: brightness(.70) contrast(2.5) saturate(1.17); }
+            .piece.active[aria-label="Flame-detail jeans"] .denim { filter: contrast(1.16) saturate(1.22); }
             .piece { mix-blend-mode: multiply; }
             @media (prefers-reduced-motion: reduce) { .piece, .hanger, .denim { transition: none; } }
           </style>

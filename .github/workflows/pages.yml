@@ -68,6 +68,7 @@ jobs:
               transition: filter .3s;
             }
             .piece.active .denim { mix-blend-mode: normal; filter: brightness(.70) contrast(2.5) saturate(1.17); }
+            .piece:not(.active)[aria-label="Flame-detail jeans"] .denim { opacity: .55; }
             .piece.active[aria-label="Flame-detail jeans"] .denim { filter: contrast(1.16) saturate(1.22); }
             .piece { mix-blend-mode: multiply; }
             @media (prefers-reduced-motion: reduce) { .piece, .hanger, .denim { transition: none; } }
